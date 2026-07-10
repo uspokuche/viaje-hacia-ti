@@ -151,7 +151,7 @@
             transform: translateX(-50%);
             width: 90%;
             max-width: 800px;
-            max-height: 45vh;
+            height: 45vh; /* SOLUCIÓN ÉLITE: Tamaño fijo para evitar parpadeos visuales */
             overflow-y: auto;
             background: linear-gradient(135deg, rgba(15, 15, 25, 0.8), rgba(5, 5, 10, 0.6));
             backdrop-filter: blur(15px);
@@ -208,7 +208,7 @@
             color: #e2e8f0;
             font-style: italic;
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-            text-align: left; /* Alineación a la izquierda para el efecto de máquina de escribir */
+            text-align: left;
         }
 
         /* --- ESTILOS EFECTO MÁQUINA DE ESCRIBIR --- */
@@ -366,7 +366,7 @@
         @media (max-width: 768px) {
             .intro-title { font-size: 2.8rem; }
             .intro-note { font-size: 1rem; }
-            .text-panel { padding: 20px; top: 3vh; max-height: 48vh; }
+            .text-panel { padding: 20px; top: 3vh; height: 48vh; } /* SOLUCIÓN ÉLITE MÓVIL: Mantiene la caja absoluta */
             h1.stage-heading { font-size: 1.8rem; margin-bottom: 10px; }
             p.dedication { font-size: 1.05rem; }
             #final-photo-container { width: 85vw; height: 85vw; top: 53%; }
@@ -449,13 +449,12 @@
         { id: 'maracay', name: 'Ciudad Maracay', desc: 'La Ciudad Jardín. Cada calle, cada clima y cada lugar que recorro ahora tiene un brillo distinto, porque los transito con la ilusión de saber que estás cerca.', texture: './assets/maracay.jpg', size: 4, isMap: true },
         { id: 'final', name: 'Nuestro Universo', desc: 'De todas las galaxias, constelaciones y lugares en la Tierra, mi lugar favorito es y siempre será exactamente aquí, contigo.', isFinal: true }
     ];
-        // --- FUNCIÓN ÉLITE: TYPEWRITER EFECTO MÁQUINA DE ESCRIBIR (SIN SCROLL) ---
+
+    // --- FUNCIÓN ÉLITE: TYPEWRITER EFECTO MÁQUINA DE ESCRIBIR (SIN SCROLL) ---
     let typewriterTimeout;
     function typeWriterEffect(element, text, speed = 85) {
-        // Limpiamos timeouts anteriores si el usuario hace clics rápidos
         if(typewriterTimeout) clearTimeout(typewriterTimeout);
         
-        // Estructura: Texto dinámico + cursor parpadeante
         element.innerHTML = '<span class="typewriter-text"></span><span class="typewriter-cursor"></span>';
         const textSpan = element.querySelector('.typewriter-text');
         const cursorSpan = element.querySelector('.typewriter-cursor');
@@ -465,12 +464,8 @@
             if (i < text.length) {
                 textSpan.innerHTML += text.charAt(i);
                 i++;
-                
-                // La lógica de scroll ha sido eliminada para respetar el tamaño fijo del contenedor
-                
                 typewriterTimeout = setTimeout(type, speed);
             } else {
-                // Al terminar de escribir, el cursor se queda parpadeando 2 segundos y se oculta
                 setTimeout(() => {
                     if(cursorSpan) cursorSpan.style.display = 'none';
                 }, 2000);
@@ -478,6 +473,76 @@
         }
         type();
     }
+
+    // --- SOLUCIÓN ÉLITE: MOTOR DE FUEGOS ARTIFICIALES INTEGRADO CORRECTAMENTE ---
+    const fwCanvas = document.getElementById('fireworks-canvas');
+    const ctx = fwCanvas.getContext('2d');
+    let fwWidth = window.innerWidth;
+    let fwHeight = window.innerHeight;
+    fwCanvas.width = fwWidth;
+    fwCanvas.height = fwHeight;
+
+    window.addEventListener('resize', () => {
+        fwWidth = window.innerWidth;
+        fwHeight = window.innerHeight;
+        fwCanvas.width = fwWidth;
+        fwCanvas.height = fwHeight;
+    });
+
+    const fireworks = [];
+    const particles = [];
+
+    class Firework {
+        constructor() {
+            this.x = Math.random() * fwWidth;
+            this.y = fwHeight;
+            this.targetY = fwHeight * 0.15 + Math.random() * (fwHeight * 0.3);
+            this.speed = 5 + Math.random() * 4;
+            this.color = `hsl(${Math.random() * 360}, 100%, 60%)`;
+        }
+        update() {
+            this.y -= this.speed;
+            return this.y <= this.targetY;
+        }
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 2.5, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+        }
+    }
+
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x;
+            this.y = y;
+            this.color = color;
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = Math.random() * 6 + 2;
+            this.vx = Math.cos(angle) * velocity;
+            this.vy = Math.sin(angle) * velocity;
+            this.alpha = 1;
+            this.decay = Math.random() * 0.02 + 0.01;
+        }
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.vy += 0.06; // Gravedad suave
+            this.alpha -= this.decay;
+            return this.alpha <= 0;
+        }
+        draw() {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 1.8, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    let fwAnimationId;
     function loopFireworks() {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
         ctx.fillRect(0, 0, fwWidth, fwHeight);
@@ -538,7 +603,7 @@
             loadPlanet(0); 
             
             nextBtn.style.display = 'inline-block';
-            nextBtn.style.pointerEvents = 'auto'; // --- SOLUCIÓN ÉLITE: ESTA LÍNEA REACTIVA EL BOTÓN ---
+            nextBtn.style.pointerEvents = 'auto'; 
             setTimeout(() => nextBtn.style.opacity = 1, 50);
             helperText.style.display = 'block';
             nextBtn.innerText = "Comenzar Viaje";
@@ -546,20 +611,17 @@
         }, 1000);
     };
 
-    // Prevención de cuelgues por archivos faltantes
     loadingManager.onError = function(url) {
         console.warn('Alerta de analista: No se pudo cargar (' + url + '). Verifica que la imagen exista y el nombre sea exacto.');
     };
 
     function startPreloading() {
-        // Cargamos primero el fondo
         textureLoader.load('./assets/8k_stars_milky_way.jpg', (tex) => {
             tex.mapping = THREE.EquirectangularReflectionMapping;
             tex.colorSpace = THREE.SRGBColorSpace;
             scene.background = tex;
         });
 
-        // Cargamos planetas
         journeyStages.forEach(stage => {
             if(stage.texture) {
                 stage.preloadedTexture = textureLoader.load(stage.texture, (tex) => {
@@ -577,7 +639,6 @@
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 20;
 
-    // NAVEGACIÓN 360 TOTALMENTE LIBRE
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
@@ -598,8 +659,6 @@
     function loadPlanet(stageIndex) {
         const stage = journeyStages[stageIndex];
         
-        // --- PREVENCIÓN DE CUELGUES (GARBAGE COLLECTION ELITE) ---
-        // Destruimos la geometría y, crucialmente, la textura asociada en la GPU.
         if (currentPlanetMesh) {
             scene.remove(currentPlanetMesh);
             currentPlanetMesh.geometry.dispose();
@@ -614,14 +673,13 @@
             currentRingMesh.material.dispose();
             currentRingMesh = null;
         }
-        // --------------------------------------------------------
 
         if (stage.isFinal) {
             document.getElementById('controls-container').style.display = 'none';
             controls.enabled = false;
             
             fwCanvas.style.opacity = 1;
-            loopFireworks();
+            loopFireworks(); // Ahora esta función funcionará de manera fluida y perfecta.
             
             const photoContainer = document.getElementById('final-photo-container');
             photoContainer.classList.add('show-full');
@@ -638,7 +696,13 @@
             geometry = new THREE.SphereGeometry(stage.size, 64, 64);
         }
 
-        const texture = stage.preloadedTexture; 
+        let texture = stage.preloadedTexture; 
+        
+        // --- SOLUCIÓN ÉLITE: FALLBACK DE MEMORIA (EVITA PÉRDIDA DE FOTOS COMO ARAGUA) ---
+        if (!texture && stage.texture) {
+            texture = textureLoader.load(stage.texture);
+            texture.colorSpace = THREE.SRGBColorSpace;
+        }
 
         let material;
         if (stage.isEmissive || stage.isMap) {
@@ -664,20 +728,17 @@
         controls.update();
     }
 
-    // --- MÁQUINA DE ESTADOS ELITE (FLUJO DE NAVEGACIÓN CORREGIDO) ---
     let systemState = 0; 
     let currentStageIndex = 0;
 
     nextBtn.addEventListener('click', () => {
         if (systemState === 0) {
-            // 1. DESBLOQUEO DEL HILO PRINCIPAL: Arrancar el audio PRIMERO
             if (audio && audio.paused) {
                 audio.play().catch(e => console.log("Audio bloqueado por navegador", e));
             }
             
-            // 2. Transición Visual Inmediata
             nextBtn.style.opacity = 0;
-            nextBtn.style.pointerEvents = 'none'; // Evitar doble clic destructivo
+            nextBtn.style.pointerEvents = 'none';
             
             introScreen.style.opacity = 0;
             setTimeout(() => introScreen.style.display = 'none', 1000);
@@ -685,20 +746,16 @@
             loadingScreen.style.display = 'flex';
             setTimeout(() => loadingScreen.style.opacity = 1, 50);
             
-            // 3. RETRASO TÁCTICO: Damos al navegador 500ms para estabilizar el audio 
-            // antes de saturar la red y el decodificador con la carga masiva.
             setTimeout(() => {
                 startPreloading(); 
             }, 500);
             
-            systemState = 0.5; // Estado intermedio "Cargando"
+            systemState = 0.5; 
             
         } else if (systemState === 1) {
-            // Mostrar texto animado
             textPanel.style.opacity = 1;
             const currentData = journeyStages[currentStageIndex];
             
-            // Título aparece directo, la descripción arranca con la máquina de escribir
             titleEl.innerHTML = currentData.name; 
             setTimeout(() => typeWriterEffect(descEl, currentData.desc, 85), 200);
 
@@ -710,12 +767,11 @@
             systemState = 2;
             
         } else if (systemState === 2) {
-            // Siguiente planeta
             currentStageIndex++;
             textPanel.style.opacity = 0;
             
             if (currentStageIndex < journeyStages.length - 1) {
-                setTimeout(() => { // Pequeño retraso para que el panel de texto baje
+                setTimeout(() => { 
                     loadPlanet(currentStageIndex);
                     nextBtn.innerText = "Escanear Coordenadas";
                     systemState = 1;
@@ -726,7 +782,6 @@
         }
     });
 
-    // --- ANIMACIÓN CONSTANTE (Bucle) ---
     function animate() {
         requestAnimationFrame(animate);
         
