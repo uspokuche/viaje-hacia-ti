@@ -612,11 +612,17 @@
             loadPlanet(0); 
             
             nextBtn.style.display = 'inline-block';
+            nextBtn.style.pointerEvents = 'auto'; // --- SOLUCIÓN ÉLITE: ESTA LÍNEA REACTIVA EL BOTÓN ---
             setTimeout(() => nextBtn.style.opacity = 1, 50);
             helperText.style.display = 'block';
             nextBtn.innerText = "Comenzar Viaje";
             systemState = 1; 
         }, 1000);
+    };
+
+    // Prevención de cuelgues por archivos faltantes
+    loadingManager.onError = function(url) {
+        console.warn('Alerta de analista: No se pudo cargar (' + url + '). Verifica que la imagen exista y el nombre sea exacto.');
     };
 
     function startPreloading() {
