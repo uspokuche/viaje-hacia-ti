@@ -575,41 +575,42 @@
         loadingPercentage.innerText = `${Math.round(progress)}%`;
     };
 
+    // DENTRO DE loadingManager.onLoad
     loadingManager.onLoad = function() {
-        // Todo está en RAM, procedemos a ocultar la pantalla de carga y mostrar el universo
-        loadingScreen.style.opacity = '0';
-        setTimeout(() => {
-            loadingScreen.style.display = 'none';
-            
-            // Reaparece el botón de controles transformado
-            nextBtn.style.display = 'inline-block';
-            setTimeout(() => nextBtn.style.opacity = 1, 50);
-            
-            helperText.style.display = 'block';
-            nextBtn.classList.remove('btn-glow');
-            nextBtn.innerText = "Escanear Coordenadas";
-            
-            loadPlanet(currentStageIndex);
-            systemState = 1; // Pasamos directo a navegar el primer planeta
+    loadingScreen.style.opacity = '0';
+    setTimeout(() => {
+        loadingScreen.style.display = 'none';
+        
+        // FORZAR RENDERIZADO INICIAL
+        loadPlanet(0); 
+        
+        nextBtn.style.display = 'inline-block';
+        setTimeout(() => nextBtn.style.opacity = 1, 50);
+        helperText.style.display = 'block';
+        nextBtn.innerText = "Comenzar Viaje";
+        systemState = 1; 
         }, 1000);
     };
-
-    // Función que arranca la carga pesada al hacer clic
-    function startPreloading() {
-        textureLoader.load('./assets/8k_stars_milky_way.jpg', (texture) => {
-            texture.mapping = THREE.EquirectangularReflectionMapping;
-            texture.colorSpace = THREE.SRGBColorSpace;
-            scene.background = texture;
+    // ASEGÚRATE DE QUE TU FUNCIÓN SE VEA ASÍ
+function startPreloading() {
+    // Cargamos primero el fondo
+    const bg = textureLoader.load('./assets/8k_stars_milky_way.jpg', (tex) => {
+        tex.mapping = THREE.EquirectangularReflectionMapping;
+        tex.colorSpace = THREE.SRGBColorSpace;
+        scene.background = tex;
         });
 
-        journeyStages.forEach(stage => {
-            if(stage.texture) {
-                stage.preloadedTexture = textureLoader.load(stage.texture);
-                stage.preloadedTexture.colorSpace = THREE.SRGBColorSpace;
-            }
-            if(stage.ringTexture) {
-                stage.preloadedRingTexture = textureLoader.load(stage.ringTexture);
-                stage.preloadedRingTexture.colorSpace = THREE.SRGBColorSpace;
+    // Cargamos planetas
+    journeyStages.forEach(stage => {
+        if(stage.texture) {
+            stage.preloadedTexture = textureLoader.load(stage.texture, (tex) => {
+                tex.colorSpace = THREE.SRGBColorSpace;
+            });
+        }
+        if(stage.ringTexture) {
+            stage.preloadedRingTexture = textureLoader.load(stage.ringTexture, (tex) => {
+                tex.colorSpace = THREE.SRGBColorSpace;
+                });
             }
         });
     }
@@ -705,27 +706,24 @@
     let currentStageIndex = 0;
 
     nextBtn.addEventListener('click', () => {
-        if (audio && audio.paused) {
-            audio.play().catch(e => console.log("Audio block"));
-        }
+    // El audio se dispara INSTANTÁNEAMENTE al hacer clic (requisito del navegador)
+    if (audio && audio.paused) {
+        audio.play().catch(e => console.log("Audio bloqueado por navegador"));
+    }
 
-        if (systemState === 0) {
-            // 1. Ocultar intro
-            introScreen.style.opacity = 0;
-            setTimeout(() => introScreen.style.display = 'none', 1000);
-            
-            // 2. Ocultar botón temporalmente para evitar dobles clics
-            nextBtn.style.opacity = 0;
-            setTimeout(() => nextBtn.style.display = 'none', 500);
+    if (systemState === 0) {
+        introScreen.style.opacity = 0;
+        setTimeout(() => introScreen.style.display = 'none', 1000);
+        nextBtn.style.opacity = 0;
+        setTimeout(() => nextBtn.style.display = 'none', 500);
 
-            // 3. Mostrar pantalla de carga elegante
-            loadingScreen.style.display = 'flex';
-            setTimeout(() => loadingScreen.style.opacity = 1, 50);
-            
-            // 4. Iniciar la carga de los modelos
-            startPreloading();
-            
-            systemState = 0.5; // Pasamos a estado intermedio
+        loadingScreen.style.display = 'flex';
+        setTimeout(() => loadingScreen.style.opacity = 1, 50);
+        
+        // AQUÍ DISPARAMOS LA CARGA REAL
+        startPreloading(); 
+        
+        systemState = 0.5; // Pasamos a estado intermedio
             
         } else if (systemState === 1) {
             // Estamos viendo el planeta -> Mostramos el panel de texto animado
