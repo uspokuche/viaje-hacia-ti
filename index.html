@@ -675,11 +675,11 @@
         }
 
         if (stage.isFinal) {
-            document.getElementById('controls-container').style.display = 'none';
+            // Nota de analista: ELIMINADA la línea que ocultaba el botón para poder reiniciar.
             controls.enabled = false;
             
             fwCanvas.style.opacity = 1;
-            loopFireworks(); // Ahora esta función funcionará de manera fluida y perfecta.
+            loopFireworks(); 
             
             const photoContainer = document.getElementById('final-photo-container');
             photoContainer.classList.add('show-full');
@@ -777,8 +777,25 @@
                     systemState = 1;
                 }, 400);
             } else {
-                loadPlanet(currentStageIndex); 
+                // --- INTEGRACIÓN ÉLITE: Carga de fase final con su texto y botón de reinicio ---
+                setTimeout(() => {
+                    loadPlanet(currentStageIndex); 
+                    
+                    // Activamos texto descriptivo final
+                    textPanel.style.opacity = 1;
+                    const finalData = journeyStages[currentStageIndex];
+                    titleEl.innerHTML = finalData.name; 
+                    setTimeout(() => typeWriterEffect(descEl, finalData.desc, 85), 200);
+                    
+                    // Transmutamos el botón a modo 'reinicio'
+                    nextBtn.innerText = "Volver al Inicio";
+                    systemState = 3; 
+                }, 400);
             }
+        } else if (systemState === 3) {
+            // --- REINICIO SEGURO ---
+            // location.reload limpia instantáneamente la VRAM y devuelve todo a estado 0.
+            window.location.reload(); 
         }
     });
 
