@@ -534,18 +534,22 @@
     function loadPlanet(stageIndex) {
         const stage = journeyStages[stageIndex];
         
+        // --- OPTIMIZACIÓN ELITE: PURGA DE VRAM ---
         if (currentPlanetMesh) {
             scene.remove(currentPlanetMesh);
             currentPlanetMesh.geometry.dispose();
+            if (currentPlanetMesh.material.map) currentPlanetMesh.material.map.dispose(); // <-- VITAL: Libera la textura pesada
             currentPlanetMesh.material.dispose();
             currentPlanetMesh = null;
         }
         if (currentRingMesh) {
             scene.remove(currentRingMesh);
             currentRingMesh.geometry.dispose();
+            if (currentRingMesh.material.map) currentRingMesh.material.map.dispose(); // <-- VITAL: Libera la textura del anillo
             currentRingMesh.material.dispose();
             currentRingMesh = null;
         }
+        // -----------------------------------------
 
         if (stage.isFinal) {
             document.getElementById('controls-container').style.display = 'none';
@@ -555,6 +559,7 @@
             loopFireworks();
             
             // Efecto Morfosis (Completa -> Corazón)
+            const photoContainer = document.getElementById('final-photo-container'); // FIX: Added missing element reference
             photoContainer.classList.add('show-full');
             setTimeout(() => {
                 photoContainer.classList.add('morph-to-heart');
