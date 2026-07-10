@@ -451,6 +451,7 @@
     ];
 
     // --- FUNCIÓN ÉLITE: TYPEWRITER EFECTO MÁQUINA DE ESCRIBIR ---
+        // --- FUNCIÓN ÉLITE: TYPEWRITER EFECTO MÁQUINA DE ESCRIBIR (OPTIMIZADA) ---
     let typewriterTimeout;
     function typeWriterEffect(element, text, speed = 85) {
         // Limpiamos timeouts anteriores si el usuario hace clics rápidos
@@ -460,15 +461,22 @@
         element.innerHTML = '<span class="typewriter-text"></span><span class="typewriter-cursor"></span>';
         const textSpan = element.querySelector('.typewriter-text');
         const cursorSpan = element.querySelector('.typewriter-cursor');
+        const textPanel = document.getElementById('text-panel');
         
         let i = 0;
         function type() {
             if (i < text.length) {
                 textSpan.innerHTML += text.charAt(i);
                 i++;
-                // Hacemos scroll al final del contenedor automáticamente mientras escribe
-                const textPanel = document.getElementById('text-panel');
-                if(textPanel) textPanel.scrollTop = textPanel.scrollHeight;
+                
+                // --- SCROLL SUAVE SINCRONIZADO ---
+                // Solo realizamos scroll si el contenido supera la altura del contenedor
+                if(textPanel && textPanel.scrollHeight > textPanel.clientHeight) {
+                    textPanel.scrollTo({
+                        top: textPanel.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }
                 
                 typewriterTimeout = setTimeout(type, speed);
             } else {
@@ -480,7 +488,6 @@
         }
         type();
     }
-
     // --- SISTEMA NATIVO DE FUEGOS ARTIFICIALES ---
     const fwCanvas = document.getElementById('fireworks-canvas');
     const ctx = fwCanvas.getContext('2d');
