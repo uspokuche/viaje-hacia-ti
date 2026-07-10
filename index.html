@@ -41,6 +41,53 @@
             pointer-events: none;
         }
 
+        /* --- PANTALLA DE CARGA (NUEVO) --- */
+        #loading-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #050508;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s ease, visibility 1s;
+        }
+
+        .loading-title {
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            color: #d4af37;
+            margin-bottom: 30px;
+            animation: pulseText 2s infinite;
+        }
+
+        .loading-bar-container {
+            width: 60%;
+            max-width: 400px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .loading-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, transparent, #d4af37, #fff);
+            transition: width 0.3s ease;
+        }
+
+        .loading-percentage {
+            margin-top: 15px;
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 3px;
+        }
+
         /* --- PANTALLA DE INICIO --- */
         #intro-screen {
             position: absolute;
@@ -50,7 +97,14 @@
             text-align: center;
             width: 90%;
             z-index: 20;
+            opacity: 0; /* Se oculta inicialmente hasta que cargue todo */
             transition: opacity 1s ease-out;
+            pointer-events: none;
+        }
+
+        #intro-screen.ready {
+            opacity: 1;
+            pointer-events: auto;
         }
 
         .intro-title {
@@ -179,6 +233,12 @@
             text-align: center;
             pointer-events: auto;
             z-index: 25;
+            opacity: 0; /* Se oculta inicialmente hasta que cargue todo */
+            transition: opacity 1s ease-out;
+        }
+
+        #controls-container.ready {
+            opacity: 1;
         }
 
         button {
@@ -320,6 +380,8 @@
             p.dedication { font-size: 1.05rem; }
             #final-photo-container { width: 85vw; height: 85vw; top: 53%; }
             button { padding: 14px 30px; font-size: 1rem; }
+            .loading-title { font-size: 1.5rem; }
+            .loading-bar-container { width: 80%; }
         }
     </style>
 </head>
@@ -339,6 +401,14 @@
     
     <canvas id="webgl-canvas"></canvas>
     <canvas id="fireworks-canvas"></canvas>
+
+    <div id="loading-screen">
+        <h2 class="loading-title">Preparando Universo</h2>
+        <div class="loading-bar-container">
+            <div id="loading-bar" class="loading-bar"></div>
+        </div>
+        <div id="loading-percentage" class="loading-percentage">0%</div>
+    </div>
 
     <div id="ui-layer">
         <div id="intro-screen">
@@ -503,11 +573,49 @@
 
     const scene = new THREE.Scene();
     
-    const textureLoader = new THREE.TextureLoader();
+    // --- GESTOR DE CARGA ÉLITE (PRELOADER) ---
+    const loadingManager = new THREE.LoadingManager();
+    const textureLoader = new THREE.TextureLoader(loadingManager);
+    
+    const loadingScreen = document.getElementById('loading-screen');
+    const loadingBar = document.getElementById('loading-bar');
+    const loadingPercentage = document.getElementById('loading-percentage');
+    const introScreen = document.getElementById('intro-screen');
+    const controlsContainer = document.getElementById('controls-container');
+
+    loadingManager.onProgress = function(url, itemsLoaded, itemsTotal) {
+        const progress = (itemsLoaded / itemsTotal) * 100;
+        loadingBar.style.width = `${progress}%`;
+        loadingPercentage.innerText = `${Math.round(progress)}%`;
+    };
+
+    loadingManager.onLoad = function() {
+        // Todo está en RAM, procedemos a ocultar la pantalla de carga
+        loadingScreen.style.opacity = '0';
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+            introScreen.classList.add('ready');
+            controlsContainer.classList.add('ready');
+        }, 1000);
+    };
+
+    // Pre-cargamos el fondo galáctico
     textureLoader.load('./assets/8k_stars_milky_way.jpg', (texture) => {
         texture.mapping = THREE.EquirectangularReflectionMapping;
         texture.colorSpace = THREE.SRGBColorSpace;
         scene.background = texture;
+    });
+
+    // Pre-cargamos absolutamente todas las texturas de los planetas y las almacenamos en el array
+    journeyStages.forEach(stage => {
+        if(stage.texture) {
+            stage.preloadedTexture = textureLoader.load(stage.texture);
+            stage.preloadedTexture.colorSpace = THREE.SRGBColorSpace;
+        }
+        if(stage.ringTexture) {
+            stage.preloadedRingTexture = textureLoader.load(stage.ringTexture);
+            stage.preloadedRingTexture.colorSpace = THREE.SRGBColorSpace;
+        }
     });
 
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -517,7 +625,7 @@
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.minDistance = 4; // Permite acercarse bastante
+    controls.minDistance = 4;
     controls.maxDistance = 50;
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.05);
@@ -534,22 +642,20 @@
     function loadPlanet(stageIndex) {
         const stage = journeyStages[stageIndex];
         
-        // --- OPTIMIZACIÓN ELITE: PURGA DE VRAM ---
+        // Limpiamos la malla anterior, pero como pre-cargamos, NO hacemos dispose() del material.map 
+        // para no matar la textura almacenada en memoria si alguna vez el sistema la requiere de nuevo.
         if (currentPlanetMesh) {
             scene.remove(currentPlanetMesh);
             currentPlanetMesh.geometry.dispose();
-            if (currentPlanetMesh.material.map) currentPlanetMesh.material.map.dispose(); // <-- VITAL: Libera la textura pesada
             currentPlanetMesh.material.dispose();
             currentPlanetMesh = null;
         }
         if (currentRingMesh) {
             scene.remove(currentRingMesh);
             currentRingMesh.geometry.dispose();
-            if (currentRingMesh.material.map) currentRingMesh.material.map.dispose(); // <-- VITAL: Libera la textura del anillo
             currentRingMesh.material.dispose();
             currentRingMesh = null;
         }
-        // -----------------------------------------
 
         if (stage.isFinal) {
             document.getElementById('controls-container').style.display = 'none';
@@ -558,8 +664,7 @@
             fwCanvas.style.opacity = 1;
             loopFireworks();
             
-            // Efecto Morfosis (Completa -> Corazón)
-            const photoContainer = document.getElementById('final-photo-container'); // FIX: Added missing element reference
+            const photoContainer = document.getElementById('final-photo-container');
             photoContainer.classList.add('show-full');
             setTimeout(() => {
                 photoContainer.classList.add('morph-to-heart');
@@ -574,8 +679,8 @@
             geometry = new THREE.SphereGeometry(stage.size, 64, 64);
         }
 
-        const texture = textureLoader.load(stage.texture);
-        texture.colorSpace = THREE.SRGBColorSpace;
+        // --- OPTIMIZACIÓN: USAR TEXTURA DIRECTA DESDE LA RAM ---
+        const texture = stage.preloadedTexture; 
 
         let material;
         if (stage.isEmissive || stage.isMap) {
@@ -589,7 +694,7 @@
 
         if (stage.hasRing) {
             const ringGeometry = new THREE.RingGeometry(stage.size + 1.5, stage.size + 6, 64);
-            const ringTexture = textureLoader.load(stage.ringTexture);
+            const ringTexture = stage.preloadedRingTexture; // Usar desde RAM
             const ringMaterial = new THREE.MeshBasicMaterial({ map: ringTexture, side: THREE.DoubleSide, transparent: true, opacity: 0.9 });
             currentRingMesh = new THREE.Mesh(ringGeometry, ringMaterial);
             currentRingMesh.rotation.x = Math.PI / 2 + 0.2;
@@ -608,7 +713,6 @@
     let currentStageIndex = 0;
     
     const nextBtn = document.getElementById('next-btn');
-    const introScreen = document.getElementById('intro-screen');
     const textPanel = document.getElementById('text-panel');
     const helperText = document.getElementById('helper-text');
     const audio = document.getElementById('background-audio');
