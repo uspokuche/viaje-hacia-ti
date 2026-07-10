@@ -449,16 +449,16 @@
         { id: 'maracay', name: 'Ciudad Maracay', desc: 'La Ciudad Jardín. Cada calle, cada clima y cada lugar que recorro ahora tiene un brillo distinto, porque los transito con la ilusión de saber que estás cerca.', texture: './assets/maracay.jpg', size: 4, isMap: true },
         { id: 'final', name: 'Nuestro Universo', desc: 'De todas las galaxias, constelaciones y lugares en la Tierra, mi lugar favorito es y siempre será exactamente aquí, contigo.', isFinal: true }
     ];
-    // --- FUNCIÓN ÉLITE: TYPEWRITER EFECTO MÁQUINA DE ESCRIBIR (OPTIMIZADA) ---
+        // --- FUNCIÓN ÉLITE: TYPEWRITER EFECTO MÁQUINA DE ESCRIBIR (SIN SCROLL) ---
     let typewriterTimeout;
     function typeWriterEffect(element, text, speed = 85) {
         // Limpiamos timeouts anteriores si el usuario hace clics rápidos
         if(typewriterTimeout) clearTimeout(typewriterTimeout);
         
+        // Estructura: Texto dinámico + cursor parpadeante
         element.innerHTML = '<span class="typewriter-text"></span><span class="typewriter-cursor"></span>';
         const textSpan = element.querySelector('.typewriter-text');
         const cursorSpan = element.querySelector('.typewriter-cursor');
-        const textPanel = document.getElementById('text-panel');
         
         let i = 0;
         function type() {
@@ -466,14 +466,7 @@
                 textSpan.innerHTML += text.charAt(i);
                 i++;
                 
-                // MANTENIMIENTO DEL SCROLL SUAVE:
-                // Solo realizamos scroll si el texto realmente ha excedido la altura
-                if(textPanel && textPanel.scrollHeight > textPanel.clientHeight) {
-                    textPanel.scrollTo({
-                        top: textPanel.scrollHeight,
-                        behavior: 'smooth'
-                    });
-                }
+                // La lógica de scroll ha sido eliminada para respetar el tamaño fijo del contenedor
                 
                 typewriterTimeout = setTimeout(type, speed);
             } else {
@@ -484,7 +477,7 @@
             }
         }
         type();
-         }
+    }
     function loopFireworks() {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
         ctx.fillRect(0, 0, fwWidth, fwHeight);
