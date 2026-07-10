@@ -49,7 +49,7 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             z-index: 100;
-            display: none; /* Oculto al inicio, se activa post-clic */
+            display: none; 
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -111,7 +111,6 @@
             letter-spacing: 5px;
             background: linear-gradient(135deg, #fff, #d4af37, #ff6b6b, #fff);
             background-size: 300% 300%;
-            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             animation: gradientMove 5s ease infinite, floatText 3s ease-in-out infinite;
@@ -209,18 +208,28 @@
             color: #e2e8f0;
             font-style: italic;
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            text-align: left; /* Alineación a la izquierda para el efecto de máquina de escribir */
         }
 
-        .animated-word {
+        /* --- ESTILOS EFECTO MÁQUINA DE ESCRIBIR --- */
+        .typewriter-text {
+            display: inline;
+        }
+
+        .typewriter-cursor {
             display: inline-block;
-            opacity: 0;
-            transform: translateY(15px) scale(0.9);
-            filter: blur(8px);
-            animation: wordReveal 0.6s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+            width: 3px;
+            height: 1.2em;
+            background-color: #d4af37;
+            vertical-align: text-bottom;
+            animation: blinkCursor 0.75s step-end infinite;
+            margin-left: 4px;
+            box-shadow: 0 0 5px rgba(212, 175, 55, 0.8);
         }
 
-        @keyframes wordReveal {
-            to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        @keyframes blinkCursor {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
         }
 
         #controls-container {
@@ -418,7 +427,7 @@
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    // 1. CONFIGURACIÓN DEL VIAJE
+    // 1. CONFIGURACIÓN DEL VIAJE (El orden se mantiene intacto)
     const journeyStages = [
         { id: 'orion', name: 'Constelación de Orión', desc: 'En el cielo invernal, Orión es el cazador, una de las constelaciones más brillantes. Así como sus estrellas en el cinturón han guiado a los navegantes durante milenios, tú te has convertido en mi brújula en este inmenso universo. Desde que te encontré, me guías con tu luz. Ya no divago sin rumbo, porque ahora todas mis estrellas y todos mis pasos me llevan directamente hacia ti.', texture: './assets/orion.jpg', size: 8, isEmissive: true, isMap: true },
         { id: 'ursa_major', name: 'La Osa Mayor', desc: 'La Osa Mayor es legendaria porque siempre nos ayuda a encontrar la Estrella Polar, ese punto fijo y seguro que nunca cambia en el firmamento. En medio del caos y de los giros inesperados de la vida, tú eres esa constante para mí. Eres mi norte, mi punto de referencia. No importa cuán oscuro se ponga el cielo a veces, sé que siempre puedo mirar hacia ti para encontrar el camino a casa.', texture: './assets/osa.jpg', size: 8, isEmissive: true, isMap: true },
@@ -441,17 +450,35 @@
         { id: 'final', name: 'Nuestro Universo', desc: 'De todas las galaxias, constelaciones y lugares en la Tierra, mi lugar favorito es y siempre será exactamente aquí, contigo.', isFinal: true }
     ];
 
-    // --- ANIMACIÓN DE TEXTO ELITE ---
-    function animateText(element, text, stagger = 0.04) {
-        element.innerHTML = '';
-        const words = text.split(' ');
-        words.forEach((word, index) => {
-            const span = document.createElement('span');
-            span.innerHTML = word + '&nbsp;';
-            span.className = 'animated-word';
-            span.style.animationDelay = `${index * stagger}s`;
-            element.appendChild(span);
-        });
+    // --- FUNCIÓN ÉLITE: TYPEWRITER EFECTO MÁQUINA DE ESCRIBIR ---
+    let typewriterTimeout;
+    function typeWriterEffect(element, text, speed = 35) {
+        // Limpiamos timeouts anteriores si el usuario hace clics rápidos
+        if(typewriterTimeout) clearTimeout(typewriterTimeout);
+        
+        // Estructura: Texto dinámico + cursor parpadeante
+        element.innerHTML = '<span class="typewriter-text"></span><span class="typewriter-cursor"></span>';
+        const textSpan = element.querySelector('.typewriter-text');
+        const cursorSpan = element.querySelector('.typewriter-cursor');
+        
+        let i = 0;
+        function type() {
+            if (i < text.length) {
+                textSpan.innerHTML += text.charAt(i);
+                i++;
+                // Hacemos scroll al final del contenedor automáticamente mientras escribe
+                const textPanel = document.getElementById('text-panel');
+                if(textPanel) textPanel.scrollTop = textPanel.scrollHeight;
+                
+                typewriterTimeout = setTimeout(type, speed);
+            } else {
+                // Al terminar de escribir, el cursor se queda parpadeando 2 segundos y se oculta
+                setTimeout(() => {
+                    if(cursorSpan) cursorSpan.style.display = 'none';
+                }, 2000);
+            }
+        }
+        type();
     }
 
     // --- SISTEMA NATIVO DE FUEGOS ARTIFICIALES ---
@@ -576,41 +603,40 @@
         loadingPercentage.innerText = `${Math.round(progress)}%`;
     };
 
-    // DENTRO DE loadingManager.onLoad
     loadingManager.onLoad = function() {
-    loadingScreen.style.opacity = '0';
-    setTimeout(() => {
-        loadingScreen.style.display = 'none';
-        
-        // FORZAR RENDERIZADO INICIAL
-        loadPlanet(0); 
-        
-        nextBtn.style.display = 'inline-block';
-        setTimeout(() => nextBtn.style.opacity = 1, 50);
-        helperText.style.display = 'block';
-        nextBtn.innerText = "Comenzar Viaje";
-        systemState = 1; 
+        loadingScreen.style.opacity = '0';
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+            
+            // FORZAR RENDERIZADO INICIAL
+            loadPlanet(0); 
+            
+            nextBtn.style.display = 'inline-block';
+            setTimeout(() => nextBtn.style.opacity = 1, 50);
+            helperText.style.display = 'block';
+            nextBtn.innerText = "Comenzar Viaje";
+            systemState = 1; 
         }, 1000);
     };
-    // ASEGÚRATE DE QUE TU FUNCIÓN SE VEA ASÍ
-function startPreloading() {
-    // Cargamos primero el fondo
-    const bg = textureLoader.load('./assets/8k_stars_milky_way.jpg', (tex) => {
-        tex.mapping = THREE.EquirectangularReflectionMapping;
-        tex.colorSpace = THREE.SRGBColorSpace;
-        scene.background = tex;
+
+    function startPreloading() {
+        // Cargamos primero el fondo
+        textureLoader.load('./assets/8k_stars_milky_way.jpg', (tex) => {
+            tex.mapping = THREE.EquirectangularReflectionMapping;
+            tex.colorSpace = THREE.SRGBColorSpace;
+            scene.background = tex;
         });
 
-    // Cargamos planetas
-    journeyStages.forEach(stage => {
-        if(stage.texture) {
-            stage.preloadedTexture = textureLoader.load(stage.texture, (tex) => {
-                tex.colorSpace = THREE.SRGBColorSpace;
-            });
-        }
-        if(stage.ringTexture) {
-            stage.preloadedRingTexture = textureLoader.load(stage.ringTexture, (tex) => {
-                tex.colorSpace = THREE.SRGBColorSpace;
+        // Cargamos planetas
+        journeyStages.forEach(stage => {
+            if(stage.texture) {
+                stage.preloadedTexture = textureLoader.load(stage.texture, (tex) => {
+                    tex.colorSpace = THREE.SRGBColorSpace;
+                });
+            }
+            if(stage.ringTexture) {
+                stage.preloadedRingTexture = textureLoader.load(stage.ringTexture, (tex) => {
+                    tex.colorSpace = THREE.SRGBColorSpace;
                 });
             }
         });
@@ -636,22 +662,27 @@ function startPreloading() {
     let currentPlanetMesh = null;
     let currentRingMesh = null;
 
-    // 3. GENERADOR DE GEOMETRÍA
+    // 3. GENERADOR DE GEOMETRÍA Y DESTRUCTOR DE VRAM
     function loadPlanet(stageIndex) {
         const stage = journeyStages[stageIndex];
         
+        // --- PREVENCIÓN DE CUELGUES (GARBAGE COLLECTION ELITE) ---
+        // Destruimos la geometría y, crucialmente, la textura asociada en la GPU.
         if (currentPlanetMesh) {
             scene.remove(currentPlanetMesh);
             currentPlanetMesh.geometry.dispose();
+            if (currentPlanetMesh.material.map) currentPlanetMesh.material.map.dispose();
             currentPlanetMesh.material.dispose();
             currentPlanetMesh = null;
         }
         if (currentRingMesh) {
             scene.remove(currentRingMesh);
             currentRingMesh.geometry.dispose();
+            if (currentRingMesh.material.map) currentRingMesh.material.map.dispose();
             currentRingMesh.material.dispose();
             currentRingMesh = null;
         }
+        // --------------------------------------------------------
 
         if (stage.isFinal) {
             document.getElementById('controls-container').style.display = 'none';
@@ -701,38 +732,43 @@ function startPreloading() {
         controls.update();
     }
 
-    // --- MÁQUINA DE ESTADOS ELITE (FLUJO DE NAVEGACIÓN REESTRUCTURADO) ---
-    // 0: Inicio | 0.5: Cargando | 1: Viendo Planeta (sin texto) | 2: Viendo Planeta (con texto)
+    // --- MÁQUINA DE ESTADOS ELITE (FLUJO DE NAVEGACIÓN CORREGIDO) ---
     let systemState = 0; 
     let currentStageIndex = 0;
 
     nextBtn.addEventListener('click', () => {
-    // El audio se dispara INSTANTÁNEAMENTE al hacer clic (requisito del navegador)
-    if (audio && audio.paused) {
-        audio.play().catch(e => console.log("Audio bloqueado por navegador"));
-    }
+        if (systemState === 0) {
+            // 1. DESBLOQUEO DEL HILO PRINCIPAL: Arrancar el audio PRIMERO
+            if (audio && audio.paused) {
+                audio.play().catch(e => console.log("Audio bloqueado por navegador", e));
+            }
+            
+            // 2. Transición Visual Inmediata
+            nextBtn.style.opacity = 0;
+            nextBtn.style.pointerEvents = 'none'; // Evitar doble clic destructivo
+            
+            introScreen.style.opacity = 0;
+            setTimeout(() => introScreen.style.display = 'none', 1000);
 
-    if (systemState === 0) {
-        introScreen.style.opacity = 0;
-        setTimeout(() => introScreen.style.display = 'none', 1000);
-        nextBtn.style.opacity = 0;
-        setTimeout(() => nextBtn.style.display = 'none', 500);
-
-        loadingScreen.style.display = 'flex';
-        setTimeout(() => loadingScreen.style.opacity = 1, 50);
-        
-        // AQUÍ DISPARAMOS LA CARGA REAL
-        startPreloading(); 
-        
-        systemState = 0.5; // Pasamos a estado intermedio
+            loadingScreen.style.display = 'flex';
+            setTimeout(() => loadingScreen.style.opacity = 1, 50);
+            
+            // 3. RETRASO TÁCTICO: Damos al navegador 500ms para estabilizar el audio 
+            // antes de saturar la red y el decodificador con la carga masiva.
+            setTimeout(() => {
+                startPreloading(); 
+            }, 500);
+            
+            systemState = 0.5; // Estado intermedio "Cargando"
             
         } else if (systemState === 1) {
-            // Estamos viendo el planeta -> Mostramos el panel de texto animado
+            // Mostrar texto animado
             textPanel.style.opacity = 1;
-            
             const currentData = journeyStages[currentStageIndex];
-            animateText(titleEl, currentData.name, 0.05); 
-            setTimeout(() => animateText(descEl, currentData.desc, 0.02), 300);
+            
+            // Título aparece directo, la descripción arranca con la máquina de escribir
+            titleEl.innerHTML = currentData.name; 
+            setTimeout(() => typeWriterEffect(descEl, currentData.desc, 40), 200);
 
             if (currentStageIndex === journeyStages.length - 2) {
                 nextBtn.innerText = "Llegar a Ti ❤️";
@@ -742,16 +778,17 @@ function startPreloading() {
             systemState = 2;
             
         } else if (systemState === 2) {
-            // Ya leímos el texto -> Viajamos al siguiente planeta
+            // Siguiente planeta
             currentStageIndex++;
             textPanel.style.opacity = 0;
             
             if (currentStageIndex < journeyStages.length - 1) {
-                loadPlanet(currentStageIndex);
-                nextBtn.innerText = "Escanear Coordenadas";
-                systemState = 1;
+                setTimeout(() => { // Pequeño retraso para que el panel de texto baje
+                    loadPlanet(currentStageIndex);
+                    nextBtn.innerText = "Escanear Coordenadas";
+                    systemState = 1;
+                }, 400);
             } else {
-                // FASE FINAL
                 loadPlanet(currentStageIndex); 
             }
         }
