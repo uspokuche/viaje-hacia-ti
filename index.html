@@ -41,17 +41,21 @@
             pointer-events: none;
         }
 
-        /* --- PANTALLA DE CARGA (NUEVO) --- */
+        /* --- PANTALLA DE CARGA ÉLITE --- */
         #loading-screen {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #050508;
+            background-color: rgba(5, 5, 8, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             z-index: 100;
-            display: flex;
+            display: none; /* Oculto al inicio, se activa post-clic */
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            transition: opacity 1s ease, visibility 1s;
+            opacity: 0;
+            transition: opacity 1s ease;
+            pointer-events: none;
         }
 
         .loading-title {
@@ -97,14 +101,7 @@
             text-align: center;
             width: 90%;
             z-index: 20;
-            opacity: 0; /* Se oculta inicialmente hasta que cargue todo */
             transition: opacity 1s ease-out;
-            pointer-events: none;
-        }
-
-        #intro-screen.ready {
-            opacity: 1;
-            pointer-events: auto;
         }
 
         .intro-title {
@@ -233,12 +230,6 @@
             text-align: center;
             pointer-events: auto;
             z-index: 25;
-            opacity: 0; /* Se oculta inicialmente hasta que cargue todo */
-            transition: opacity 1s ease-out;
-        }
-
-        #controls-container.ready {
-            opacity: 1;
         }
 
         button {
@@ -267,7 +258,6 @@
             transition: left 0.5s ease;
         }
 
-        /* Botón brillante y pulsante (Inicio) */
         .btn-glow {
             animation: pulseBtn 2s infinite ease-in-out;
             border-color: rgba(212, 175, 55, 1);
@@ -296,7 +286,7 @@
             margin-bottom: 20px;
             letter-spacing: 2px;
             text-transform: uppercase;
-            display: none; /* Se oculta hasta salir del inicio */
+            display: none;
             animation: pulseText 2.5s infinite;
         }
 
@@ -363,15 +353,6 @@
             animation: heartbeat 2s infinite ease-in-out 1.5s; 
         }
 
-        @keyframes heartbeat {
-            0% { transform: scale(1); }
-            10% { transform: scale(1.08); filter: drop-shadow(0 0 50px rgba(255, 50, 100, 1)); }
-            20% { transform: scale(1); }
-            30% { transform: scale(1.08); filter: drop-shadow(0 0 50px rgba(255, 50, 100, 1)); }
-            50% { transform: scale(1); filter: drop-shadow(0 0 35px rgba(255, 50, 100, 0.9)); }
-            100% { transform: scale(1); }
-        }
-
         @media (max-width: 768px) {
             .intro-title { font-size: 2.8rem; }
             .intro-note { font-size: 1rem; }
@@ -436,7 +417,7 @@
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    // 1. CONFIGURACIÓN DEL VIAJE (Orden exacto y Descripciones Originales)
+    // 1. CONFIGURACIÓN DEL VIAJE
     const journeyStages = [
         { id: 'orion', name: 'Constelación de Orión', desc: 'En el cielo invernal, Orión es el cazador, una de las constelaciones más brillantes. Así como sus estrellas en el cinturón han guiado a los navegantes durante milenios, tú te has convertido en mi brújula en este inmenso universo. Desde que te encontré, me guías con tu luz. Ya no divago sin rumbo, porque ahora todas mis estrellas y todos mis pasos me llevan directamente hacia ti.', texture: './assets/orion.jpg', size: 8, isEmissive: true, isMap: true },
         { id: 'ursa_major', name: 'La Osa Mayor', desc: 'La Osa Mayor es legendaria porque siempre nos ayuda a encontrar la Estrella Polar, ese punto fijo y seguro que nunca cambia en el firmamento. En medio del caos y de los giros inesperados de la vida, tú eres esa constante para mí. Eres mi norte, mi punto de referencia. No importa cuán oscuro se ponga el cielo a veces, sé que siempre puedo mirar hacia ti para encontrar el camino a casa.', texture: './assets/osa.jpg', size: 8, isEmissive: true, isMap: true },
@@ -573,7 +554,7 @@
 
     const scene = new THREE.Scene();
     
-    // --- GESTOR DE CARGA ÉLITE (PRELOADER) ---
+    // --- GESTOR DE CARGA ÉLITE (PRELOADER DIFERIDO) ---
     const loadingManager = new THREE.LoadingManager();
     const textureLoader = new THREE.TextureLoader(loadingManager);
     
@@ -581,7 +562,12 @@
     const loadingBar = document.getElementById('loading-bar');
     const loadingPercentage = document.getElementById('loading-percentage');
     const introScreen = document.getElementById('intro-screen');
-    const controlsContainer = document.getElementById('controls-container');
+    const nextBtn = document.getElementById('next-btn');
+    const textPanel = document.getElementById('text-panel');
+    const helperText = document.getElementById('helper-text');
+    const audio = document.getElementById('background-audio');
+    const titleEl = document.getElementById('stage-title');
+    const descEl = document.getElementById('stage-desc');
 
     loadingManager.onProgress = function(url, itemsLoaded, itemsTotal) {
         const progress = (itemsLoaded / itemsTotal) * 100;
@@ -590,33 +576,43 @@
     };
 
     loadingManager.onLoad = function() {
-        // Todo está en RAM, procedemos a ocultar la pantalla de carga
+        // Todo está en RAM, procedemos a ocultar la pantalla de carga y mostrar el universo
         loadingScreen.style.opacity = '0';
         setTimeout(() => {
             loadingScreen.style.display = 'none';
-            introScreen.classList.add('ready');
-            controlsContainer.classList.add('ready');
+            
+            // Reaparece el botón de controles transformado
+            nextBtn.style.display = 'inline-block';
+            setTimeout(() => nextBtn.style.opacity = 1, 50);
+            
+            helperText.style.display = 'block';
+            nextBtn.classList.remove('btn-glow');
+            nextBtn.innerText = "Escanear Coordenadas";
+            
+            loadPlanet(currentStageIndex);
+            systemState = 1; // Pasamos directo a navegar el primer planeta
         }, 1000);
     };
 
-    // Pre-cargamos el fondo galáctico
-    textureLoader.load('./assets/8k_stars_milky_way.jpg', (texture) => {
-        texture.mapping = THREE.EquirectangularReflectionMapping;
-        texture.colorSpace = THREE.SRGBColorSpace;
-        scene.background = texture;
-    });
+    // Función que arranca la carga pesada al hacer clic
+    function startPreloading() {
+        textureLoader.load('./assets/8k_stars_milky_way.jpg', (texture) => {
+            texture.mapping = THREE.EquirectangularReflectionMapping;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            scene.background = texture;
+        });
 
-    // Pre-cargamos absolutamente todas las texturas de los planetas y las almacenamos en el array
-    journeyStages.forEach(stage => {
-        if(stage.texture) {
-            stage.preloadedTexture = textureLoader.load(stage.texture);
-            stage.preloadedTexture.colorSpace = THREE.SRGBColorSpace;
-        }
-        if(stage.ringTexture) {
-            stage.preloadedRingTexture = textureLoader.load(stage.ringTexture);
-            stage.preloadedRingTexture.colorSpace = THREE.SRGBColorSpace;
-        }
-    });
+        journeyStages.forEach(stage => {
+            if(stage.texture) {
+                stage.preloadedTexture = textureLoader.load(stage.texture);
+                stage.preloadedTexture.colorSpace = THREE.SRGBColorSpace;
+            }
+            if(stage.ringTexture) {
+                stage.preloadedRingTexture = textureLoader.load(stage.ringTexture);
+                stage.preloadedRingTexture.colorSpace = THREE.SRGBColorSpace;
+            }
+        });
+    }
 
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 20;
@@ -642,8 +638,6 @@
     function loadPlanet(stageIndex) {
         const stage = journeyStages[stageIndex];
         
-        // Limpiamos la malla anterior, pero como pre-cargamos, NO hacemos dispose() del material.map 
-        // para no matar la textura almacenada en memoria si alguna vez el sistema la requiere de nuevo.
         if (currentPlanetMesh) {
             scene.remove(currentPlanetMesh);
             currentPlanetMesh.geometry.dispose();
@@ -679,7 +673,6 @@
             geometry = new THREE.SphereGeometry(stage.size, 64, 64);
         }
 
-        // --- OPTIMIZACIÓN: USAR TEXTURA DIRECTA DESDE LA RAM ---
         const texture = stage.preloadedTexture; 
 
         let material;
@@ -694,45 +687,45 @@
 
         if (stage.hasRing) {
             const ringGeometry = new THREE.RingGeometry(stage.size + 1.5, stage.size + 6, 64);
-            const ringTexture = stage.preloadedRingTexture; // Usar desde RAM
+            const ringTexture = stage.preloadedRingTexture; 
             const ringMaterial = new THREE.MeshBasicMaterial({ map: ringTexture, side: THREE.DoubleSide, transparent: true, opacity: 0.9 });
             currentRingMesh = new THREE.Mesh(ringGeometry, ringMaterial);
             currentRingMesh.rotation.x = Math.PI / 2 + 0.2;
             scene.add(currentRingMesh);
         }
 
-        // Restablecer posición de cámara al cambiar de cuerpo celeste
         camera.position.set(0, 0, stage.size * 3.5);
         camera.lookAt(0, 0, 0); 
         controls.update();
     }
 
-    // --- MÁQUINA DE ESTADOS ELITE (FLUJO DE NAVEGACIÓN) ---
-    // 0: Pantalla de Inicio | 1: Viendo Planeta (sin texto) | 2: Viendo Planeta (con texto)
+    // --- MÁQUINA DE ESTADOS ELITE (FLUJO DE NAVEGACIÓN REESTRUCTURADO) ---
+    // 0: Inicio | 0.5: Cargando | 1: Viendo Planeta (sin texto) | 2: Viendo Planeta (con texto)
     let systemState = 0; 
     let currentStageIndex = 0;
-    
-    const nextBtn = document.getElementById('next-btn');
-    const textPanel = document.getElementById('text-panel');
-    const helperText = document.getElementById('helper-text');
-    const audio = document.getElementById('background-audio');
-    const titleEl = document.getElementById('stage-title');
-    const descEl = document.getElementById('stage-desc');
 
     nextBtn.addEventListener('click', () => {
-        if (audio && audio.paused) audio.play().catch(e => console.log("Audio block"));
+        if (audio && audio.paused) {
+            audio.play().catch(e => console.log("Audio block"));
+        }
 
         if (systemState === 0) {
-            // Salimos del intro -> Mostramos el primer planeta
+            // 1. Ocultar intro
             introScreen.style.opacity = 0;
             setTimeout(() => introScreen.style.display = 'none', 1000);
             
-            helperText.style.display = 'block';
-            nextBtn.classList.remove('btn-glow');
-            nextBtn.innerText = "Escanear Coordenadas";
+            // 2. Ocultar botón temporalmente para evitar dobles clics
+            nextBtn.style.opacity = 0;
+            setTimeout(() => nextBtn.style.display = 'none', 500);
+
+            // 3. Mostrar pantalla de carga elegante
+            loadingScreen.style.display = 'flex';
+            setTimeout(() => loadingScreen.style.opacity = 1, 50);
             
-            loadPlanet(currentStageIndex);
-            systemState = 1;
+            // 4. Iniciar la carga de los modelos
+            startPreloading();
+            
+            systemState = 0.5; // Pasamos a estado intermedio
             
         } else if (systemState === 1) {
             // Estamos viendo el planeta -> Mostramos el panel de texto animado
@@ -742,7 +735,6 @@
             animateText(titleEl, currentData.name, 0.05); 
             setTimeout(() => animateText(descEl, currentData.desc, 0.02), 300);
 
-            // Cambiamos texto del botón si es el paso justo antes de la foto final
             if (currentStageIndex === journeyStages.length - 2) {
                 nextBtn.innerText = "Llegar a Ti ❤️";
             } else {
@@ -770,11 +762,10 @@
     function animate() {
         requestAnimationFrame(animate);
         
-        // Rotación automática (el usuario aún puede moverlo con el mouse por el controls.update())
         if (currentPlanetMesh && !journeyStages[Math.max(0, currentStageIndex)]?.isMap) {
             currentPlanetMesh.rotation.y += 0.002;
         } else if (currentPlanetMesh) {
-            currentPlanetMesh.rotation.y += 0.0005; // Mapas rotan un poco más lento
+            currentPlanetMesh.rotation.y += 0.0005; 
         }
         if (currentRingMesh) {
             currentRingMesh.rotation.z -= 0.0005;
