@@ -23,12 +23,12 @@
             z-index: 1;
         }
 
-        /* Canvas para los fuegos artificiales - CORRECCIÓN: Z-Index a 3 para no tapar UI */
+        /* Canvas para los fuegos artificiales */
         #fireworks-canvas {
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            z-index: 3; 
+            z-index: 2; 
             pointer-events: none;
             opacity: 0;
             transition: opacity 1.5s ease;
@@ -151,7 +151,8 @@
             transform: translateX(-50%);
             width: 90%;
             max-width: 800px;
-            height: 45vh; 
+            height: fit-content; /* AJUSTE ÉLITE: Se adapta al tamaño del texto */
+            max-height: 40vh; /* Límite para que no desborde hacia abajo */
             overflow-y: auto;
             background: linear-gradient(135deg, rgba(15, 15, 25, 0.8), rgba(5, 5, 10, 0.6));
             backdrop-filter: blur(15px);
@@ -159,14 +160,14 @@
             border-top: 1px solid rgba(255, 255, 255, 0.2);
             border-bottom: 1px solid rgba(212, 175, 55, 0.4);
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), inset 0 0 20px rgba(212, 175, 55, 0.05);
-            padding: 35px 40px;
+            padding: 25px 35px; /* Padding reducido para optimizar espacio */
             border-radius: 20px;
             text-align: center;
             opacity: 0; 
             transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1);
             scrollbar-width: thin;
             scrollbar-color: rgba(212, 175, 55, 0.5) transparent;
-            z-index: 10;
+            z-index: 20;
             pointer-events: auto;
         }
 
@@ -192,8 +193,8 @@
         }
 
         h1.stage-heading {
-            font-size: 2.8rem;
-            margin-bottom: 15px;
+            font-size: 2.5rem;
+            margin-bottom: 12px;
             font-weight: 300;
             letter-spacing: 3px;
             text-transform: uppercase;
@@ -205,8 +206,8 @@
         }
 
         p.dedication {
-            font-size: 1.3rem;
-            line-height: 1.7;
+            font-size: 1.2rem;
+            line-height: 1.6;
             color: #e2e8f0;
             font-style: italic;
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
@@ -236,7 +237,7 @@
 
         #controls-container {
             position: absolute;
-            bottom: 40px;
+            bottom: 30px;
             left: 0;
             width: 100%;
             text-align: center;
@@ -295,7 +296,7 @@
         .helper-text {
             font-size: 0.9rem;
             color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             letter-spacing: 2px;
             text-transform: uppercase;
             display: none;
@@ -311,7 +312,7 @@
         /* --- SISTEMA DUAL: FOTO COMPLETA A CORAZÓN --- */
         #final-photo-container { 
             position: absolute; 
-            top: 50%; 
+            top: 58%; /* AJUSTE ÉLITE: Empujado hacia abajo para que no choque con el texto superior */
             left: 50%; 
             width: 550px; 
             height: 550px; 
@@ -343,11 +344,11 @@
         .photo-heart {
             opacity: 0;
             transform: scale(1.15); 
-            -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E");
+            -webkit-mask-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>');
             -webkit-mask-size: contain;
             -webkit-mask-position: center;
             -webkit-mask-repeat: no-repeat;
-            mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E");
+            mask-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>');
             mask-size: contain;
             mask-position: center;
             mask-repeat: no-repeat;
@@ -365,22 +366,30 @@
             animation: heartbeat 2s infinite ease-in-out 1.5s; 
         }
 
-        @keyframes heartbeat {
-            0%, 100% { transform: scale(1); }
-            15% { transform: scale(1.08); }
-            30% { transform: scale(1); }
-            45% { transform: scale(1.08); }
-            60% { transform: scale(1); }
-        }
-
+        /* --- MEDIA QUERIES (OPTIMIZACIÓN MÓVIL) --- */
         @media (max-width: 768px) {
             .intro-title { font-size: 2.8rem; }
             .intro-note { font-size: 1rem; }
-            .text-panel { padding: 20px; top: 3vh; height: 48vh; } 
-            h1.stage-heading { font-size: 1.8rem; margin-bottom: 10px; }
-            p.dedication { font-size: 1.05rem; }
-            #final-photo-container { width: 85vw; height: 85vw; top: 53%; }
-            button { padding: 14px 30px; font-size: 1rem; }
+            
+            .text-panel { 
+                padding: 18px 20px; 
+                top: 4vh; 
+                height: fit-content; 
+                max-height: 40vh; /* Altura máxima reducida para dejar espacio al corazón */
+            } 
+            
+            h1.stage-heading { font-size: 1.6rem; margin-bottom: 8px; }
+            p.dedication { font-size: 1rem; line-height: 1.4; }
+            
+            /* AJUSTE ÉLITE MÓVIL: Centrado más abajo y tamaño controlado */
+            #final-photo-container { 
+                width: 75vw; 
+                height: 75vw; 
+                top: 62%; 
+            }
+            
+            #controls-container { bottom: 20px; }
+            button { padding: 12px 28px; font-size: 1rem; }
             .loading-title { font-size: 1.5rem; }
             .loading-bar-container { width: 80%; }
         }
@@ -437,6 +446,7 @@
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+    // 1. CONFIGURACIÓN DEL VIAJE
     const journeyStages = [
         { id: 'orion', name: 'Constelación de Orión', desc: 'En el cielo invernal, Orión es el cazador, una de las constelaciones más brillantes. Así como sus estrellas en el cinturón han guiado a los navegantes durante milenios, tú te has convertido en mi brújula en este inmenso universo. Desde que te encontré, me guías con tu luz. Ya no divago sin rumbo, porque ahora todas mis estrellas y todos mis pasos me llevan directamente hacia ti.', texture: './assets/orion.jpg', size: 8, isEmissive: true, isMap: true },
         { id: 'ursa_major', name: 'La Osa Mayor', desc: 'La Osa Mayor es legendaria porque siempre nos ayuda a encontrar la Estrella Polar, ese punto fijo y seguro que nunca cambia en el firmamento. En medio del caos y de los giros inesperados de la vida, tú eres esa constante para mí. Eres mi norte, mi punto de referencia. No importa cuán oscuro se ponga el cielo a veces, sé que siempre puedo mirar hacia ti para encontrar el camino a casa.', texture: './assets/osa.jpg', size: 8, isEmissive: true, isMap: true },
@@ -459,6 +469,7 @@
         { id: 'final', name: 'Nuestro Universo', desc: 'De todas las galaxias, constelaciones y lugares en la Tierra, mi lugar favorito es y siempre será exactamente aquí, contigo.', isFinal: true }
     ];
 
+    // --- FUNCIÓN ÉLITE: TYPEWRITER EFECTO MÁQUINA DE ESCRIBIR ---
     let typewriterTimeout;
     function typeWriterEffect(element, text, speed = 85) {
         if(typewriterTimeout) clearTimeout(typewriterTimeout);
@@ -482,6 +493,7 @@
         type();
     }
 
+    // --- MOTOR DE FUEGOS ARTIFICIALES INTEGRADO ---
     const fwCanvas = document.getElementById('fireworks-canvas');
     const ctx = fwCanvas.getContext('2d');
     let fwWidth = window.innerWidth;
@@ -551,11 +563,8 @@
 
     let fwAnimationId;
     function loopFireworks() {
-        // CORRECCIÓN ÉLITE: Mantener el fondo transparente para no tapar los divs de atrás
-        ctx.globalCompositeOperation = 'destination-out';
         ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
         ctx.fillRect(0, 0, fwWidth, fwHeight);
-        ctx.globalCompositeOperation = 'lighter'; // Hace que brillen los fuegos en lugar de crear manchas negras
         
         if (Math.random() < 0.08) fireworks.push(new Firework()); 
         
@@ -575,6 +584,7 @@
         fwAnimationId = requestAnimationFrame(loopFireworks);
     }
 
+    // 2. CONFIGURACIÓN DEL MOTOR 3D Y CÁMARA
     const canvas = document.getElementById('webgl-canvas');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -582,6 +592,7 @@
 
     const scene = new THREE.Scene();
     
+    // --- GESTOR DE CARGA ÉLITE (PRELOADER DIFERIDO) ---
     const loadingManager = new THREE.LoadingManager();
     const textureLoader = new THREE.TextureLoader(loadingManager);
     
@@ -606,6 +617,7 @@
         loadingScreen.style.opacity = '0';
         setTimeout(() => {
             loadingScreen.style.display = 'none';
+            
             loadPlanet(0); 
             
             nextBtn.style.display = 'inline-block';
@@ -615,6 +627,10 @@
             nextBtn.innerText = "Comenzar Viaje";
             systemState = 1; 
         }, 1000);
+    };
+
+    loadingManager.onError = function(url) {
+        console.warn('Alerta de analista: No se pudo cargar (' + url + '). Verifica que la imagen exista y el nombre sea exacto.');
     };
 
     function startPreloading() {
@@ -657,6 +673,7 @@
     let currentPlanetMesh = null;
     let currentRingMesh = null;
 
+    // 3. GENERADOR DE GEOMETRÍA Y DESTRUCTOR DE VRAM
     function loadPlanet(stageIndex) {
         const stage = journeyStages[stageIndex];
         
@@ -677,6 +694,7 @@
 
         if (stage.isFinal) {
             document.getElementById('controls-container').style.display = 'block'; 
+            
             controls.enabled = false;
             
             textPanel.style.display = 'block';
@@ -772,22 +790,26 @@
                     systemState = 1;
                 }, 400);
             } else {
-                setTimeout(() => {
-                    loadPlanet(currentStageIndex);
-                    
-                    textPanel.style.display = "block"; 
-                    textPanel.style.opacity = "1";
-                    
-                    nextBtn.innerText = "Volver al Inicio";
-                    nextBtn.style.display = "inline-block";
-                    systemState = 3;
-                }, 400);
+                loadPlanet(currentStageIndex);
+                
+                textPanel.style.display = "block"; 
+                textPanel.style.opacity = "1";
+                
+                const finalData = journeyStages[currentStageIndex];
+                titleEl.innerHTML = finalData.name;
+                
+                typeWriterEffect(descEl, finalData.desc, 85);
+                
+                nextBtn.innerText = "Volver al Inicio";
+                nextBtn.style.display = "inline-block";
+                systemState = 3;
             }
         } else if (systemState === 3) {
             window.location.reload();
         }
     });
 
+    // --- ANIMACIÓN CONSTANTE (Bucle) ---
     function animate() {
         requestAnimationFrame(animate);
         
